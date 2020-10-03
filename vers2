@@ -1,0 +1,223 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <assert.h>
+//#include "IsE_Stack.h"
+
+#define  asserted(x) || !printf("[Error] on line number: %s\n" "return code: %s", __LINE__, x)
+
+typedef double stackType;
+const stackType poison = NAN;
+
+const double ENLARGE_BIG_COEFFICIENT = 2;
+const double ENLARGE_SMALL_COEFFICIENT = 1.5;
+const double REDUCE_COEFFICIENT = 0.4;
+
+struct  Stack
+{
+    size_t capacity;
+    size_t sz;
+    stackType data[0];
+    int errCode;
+};
+
+enum StackErrorCode
+{
+    NO_STACK_ERRORS = 0,
+    BAD_SIZE = 1,
+    UNACCEPTABLE_Member = 2
+};
+
+enum FunctionErrorCode
+{
+    NO_FUNCTION_ERRORS = 0,
+    NO_FREE_MEMORY = 1,
+    NULL_POINTER_IN_ARGUMENT = 2,
+    BAD_ARGUMENT = 3
+};
+
+int stackConstructor(struct Stack* thou, size_t capacity);
+
+void stackDestructor(struct Stack* thou);
+
+int pushIntoStack(struct Stack* thou, stackType newMember);
+
+int enlargeStack(struct Stack* thou);
+
+int reduceStack(struct Stack* thou);
+
+stackType pop(struct Stack* thou);
+
+stackType front(struct Stack* thou);
+
+int stackError(struct Stack* thou);
+
+int stackDump(struct Stack* thou);
+
+int stackResize(struct Stack* thou, size_t newCapacity);
+
+void fillStackWithPoison(struct Stack* thou, size_t beginInd, size_t endInd);
+
+int main() {
+
+    return 0;
+}
+
+//--------------------------------------------------------
+
+int stackConstructor(struct Stack* thou, size_t capacity)
+{
+    assert(thou);
+
+    thou = (Stack*) calloc(1, sizeof(*thou) + sizeof(thou->data) * capacity) ;
+    if(thou asserted(NO_FREE_MEMORY))
+        return NO_FREE_MEMORY;
+
+    thou->capacity = capacity;
+    thou->sz = 0;
+    thou->errCode = NO_STACK_ERRORS;
+
+    for (size_t i = 0; i < capacity; i++)
+        (thou->data)[i] = poison;
+
+    return 0;
+}
+
+//------------------------------------------------------------
+
+void stackDestructor(struct Stack* thou)
+{
+    assert(thou);
+
+    free(thou);
+
+    thou = NULL;
+}
+
+//------------------------------------------------------------
+
+int pushIntoStack(struct Stack* thou, stackType newMember)
+{
+    assert(thou);
+
+    if (thou->sz == thou->capacity)
+        if(enlargeStack(thou) asserted(NO_FREE_MEMORY))
+            return NO_FREE_MEMORY;
+
+    (thou->data)[thou->sz++] = newMember;
+    return NO_FUNCTION_ERRORS;
+}
+
+//-------------------------------------------------------
+
+int enlargeStack(struct Stack* thou)
+{
+    if(!stackResize(thou, (size_t)(thou->capacity * ENLARGE_BIG_COEFFICIENT)))
+        return  NO_FUNCTION_ERRORS;
+
+    if(!stackResize(thou, (size_t)(thou->capacity * ENLARGE_SMALL_COEFFICIENT)))
+        return  NO_FUNCTION_ERRORS;
+
+    if(!stackResize(thou, thou->capacity + 100))
+        return  NO_FUNCTION_ERRORS;
+
+    if(!stackResize(thou, thou->capacity + 1))
+        return  NO_FUNCTION_ERRORS;
+
+    return NO_FREE_MEMORY;
+}
+
+//----------------------------------------------------------------
+
+int reduceStack(struct Stack* thou)
+{
+    if(!stackResize(thou, thou->capacity * REDUCE_COEFFICIENT))
+        return  NO_FUNCTION_ERRORS;
+
+    return NO_FREE_MEMORY;
+}
+
+//----------------------------------------------------------------
+
+stackType pop(struct  Stack* thou)
+{
+    if(int errNo = stackError(thou))
+        return poison;
+
+    if(thou->sz > 0){
+        stackType returnMember;
+        returnMember = (thou->data)[thou->sz--];
+        fillStackWithPoison(thou, thou->sz + 1, thou->sz + 1);
+
+        if (thou->sz <= thou->capacity * REDUCE_COEFFICIENT)
+            reduceStack(thou);
+
+        return returnMember;
+    }
+
+    else
+        return poison;
+}
+
+//-----------------------------------------------------------------------
+
+int stackError(struct Stack* thou)
+{
+    if(!thou)
+        return NULL_POINTER_IN_ARGUMENT;
+
+    if(thou->sz > thou->capacity || thou->sz * 3 < thou->capacity)
+    {
+        thou->errCode = BAD_SIZE;
+        return BAD_ARGUMENT;
+    }
+
+    if(thou->data[thou->sz] != poison)
+    {
+        thou->errCode = UNACCEPTABLE_Member;
+        return BAD_ARGUMENT;
+    }
+
+    return  NO_STACK_ERRORS;
+}
+
+//-------------------------------------------------------------------------
+
+int stackResize(struct  Stack* thou, size_t newCapacity)
+{
+    //size_t sz = thou->sz;
+    //int errcode = thou->errCode;
+    struct Stack* temp =(struct Stack*)realloc(thou, sizeof(*thou) + sizeof(thou->data) * newCapacity);
+    if(!temp)
+        return NO_FREE_MEMORY;
+
+    else
+    {
+        thou = temp;
+        thou->capacity = newCapacity;
+        return NO_FUNCTION_ERRORS;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void fillStackWithPoison(struct Stack* thou, size_t beginInd, size_t endInd)
+{
+    for(size_t ind = beginInd; ind <= endInd; ++ind)
+        (thou->data)[ind] = poison;
+}
+
+//--------------------------------------------------------------------------
+
+int stackDump(struct Stack* thou, char* problem)
+{
+    if(!thou)
+    {
+        printf("NULL POINTER: THERE IS NO STACK");
+        return NULL_POINTER_IN_ARGUMENT;
+    }
+    
+    printf("StackT");
+    
+}
+
