@@ -15,7 +15,56 @@
 typedef double stackType;
 const stackType poison = NAN;
 
+
+#define ARGNAME(x) #x
+#define NCAN(a,b,c,d)  a != CANARY_VALUE || b != CANARY_VALUE || c != CANARY_VALUE || d != CANARY_VALUE
+#define asserted(x) || !printf ("[Error] on line number: %d\n" "return code: %s\n", __LINE__, x)
+
+#define Debug
+
+#ifdef Debug
+#define DBG if (1)
+#elif
+#define DBG if (0)
+#endif
+
+const double ENLARGE_BIG_COEFFICIENT = 2;
+const double ENLARGE_SMALL_COEFFICIENT = 1.5;
+const double REDUCE_COEFFICIENT = 0.4;
+const int MINIMUM_STACK_SIZE = 10;
+const unsigned long long CANARY_VALUE = 0xBADADEEEBADADAAA;
+
+enum StackErrorCode
+{
+    NO_STACK_ERRORS = 0,
+    BAD_SIZE = 1,
+    UNACCEPTABLE_Member = 2,
+    BAD_MINIMUM_SIZE = 3,
+    CANARY_VALUE_CHANGED = 4,
+    BAD_HASH = 5
+};
+
+enum FunctionErrorCode
+{
+    NO_FUNCTION_ERRORS = 0,
+    NO_FREE_MEMORY = -1,
+    NULL_POINTER_IN_ARGUMENT = -2,
+    BAD_ARGUMENT = -3
+};
+
 struct Stack;
+
+//!----------------------------------------------------------
+//!         This function constructs structure Stack
+//!
+//! \param [out] thou - pointer to current Stack
+//!
+//! \return code of function or stack error
+//!
+//! \note every stack have it`s own minimum size that always is not more than capacity
+//!----------------------------------------------------------------
+
+int stackInit (struct Stack* thou);
 
 //!----------------------------------------------------------
 //!         This function constructs structure Stack
@@ -166,6 +215,16 @@ char* numOfErrorCode (int errorCode);
 //!------------------------------------
 
 struct Stack* newStack();
+
+//!---------------------------------
+//!     enlarges stack, if we checked that it is possible
+//! \param [in] condition - shows if enlarging is possible or not
+//! \param [out] thou - pointer to stack
+//!
+//! \return code of stack or function error
+//!---------------------------------
+
+int resizeConfirm (int condition, struct Stack* thou);
 
 void fLogsClose();
 

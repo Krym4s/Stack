@@ -10,10 +10,13 @@
 #include "IsE_Stack.h"
 
 int main() {
+
     Stack* stk;
     stk = newStack();
     stackConstructor (stk, 2);
 
+    stackResize(stk, 4);
+/*
     pushIntoStack (stk, 10.0);
     stackType a = popFromStack (stk);
     printf ("%lg\n", a);
@@ -33,7 +36,7 @@ int main() {
 
     stackDestructor (stk);
 
-    fLogsClose();
+    fLogsClose();*/
     return 0;
 }
 

@@ -3,55 +3,21 @@
 //
 
 #include "IsE_Stack.h"
-#include "string.h"
+#include <cstring>
 
-#define ARGNAME(x) #x
-#define NCAN(a,b,c,d)  a != CANARY_VALUE || b != CANARY_VALUE || c != CANARY_VALUE || d != CANARY_VALUE
-#define asserted(x) || !printf ("[Error] on line number: %d\n" "return code: %s\n", __LINE__, x)
-
-#define Debug
-
-#ifdef Debug
-    #define DBG if (1)
-#elif
-    #define DBG if (0)
-#endif
-
-const double ENLARGE_BIG_COEFFICIENT = 2;
-const double ENLARGE_SMALL_COEFFICIENT = 1.5;
-const double REDUCE_COEFFICIENT = 0.4;
-const int MINIMUM_STACK_SIZE = 10;
-const unsigned long long CANARY_VALUE = 0xBADADEEEBADADAAA;
 
 struct Stack
 {
-    long long sufferer1;
+    unsigned long long sufferer1;
     size_t capacity;
     size_t sz;
     size_t minimumCpct;
     int errCode;
     long long stackHash;
     void* data;
-    long long sufferer2;
+    unsigned long long sufferer2;
 };
 
-enum StackErrorCode
-{
-    NO_STACK_ERRORS = 0,
-    BAD_SIZE = 1,
-    UNACCEPTABLE_Member = 2,
-    BAD_MINIMUM_SIZE = 3,
-    CANARY_VALUE_CHANGED = 4,
-    BAD_HASH = 5
-};
-
-enum FunctionErrorCode
-{
-    NO_FUNCTION_ERRORS = 0,
-    NO_FREE_MEMORY = -1,
-    NULL_POINTER_IN_ARGUMENT = -2,
-    BAD_ARGUMENT = -3
-};
 
 FILE* logs = fopen ("logs_stack.txt","a");
 
@@ -84,10 +50,45 @@ int stackConstructor (struct Stack* thou, size_t capacity)
 
     assert (!stackError(thou) asserted (numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError(thou)), __LINE__ );
+
     return 0;
 }
 
 //------------------------------------------------------------
+
+int stackInit (struct Stack* thou)
+{
+    assert(thou);
+
+    thou->data = (stackType*) calloc (1, (MINIMUM_STACK_SIZE) * sizeof(stackType) + 2 * sizeof(unsigned long long) );
+
+    if (!thou->data)
+        return NO_FREE_MEMORY;
+
+    *((unsigned long long *) thou->data) = CANARY_VALUE;
+    thou->data = ((unsigned long long *) thou->data + 1);
+    *((unsigned long long *)((stackType*) thou->data + MINIMUM_STACK_SIZE)) = CANARY_VALUE;
+
+    if(!thou->data)
+        return NO_FREE_MEMORY;
+
+    thou->minimumCpct = MINIMUM_STACK_SIZE;
+    thou->capacity = MINIMUM_STACK_SIZE;
+    thou->sz = 0;
+    thou->errCode = NO_STACK_ERRORS;
+    thou->sufferer1 = CANARY_VALUE;
+    thou->sufferer2 = CANARY_VALUE;
+
+    fillStackWithPoison (thou, 0,(int) MINIMUM_STACK_SIZE - 1);
+
+    thou->stackHash = makeHash (thou);
+
+    assert (!stackError(thou) asserted (numOfErrorCode (stackError (thou))));
+    DBG stackDump (thou, numOfErrorCode (stackError(thou)), __LINE__ );
+    return 0;
+}
+
+//-----------------------------------------------------------
 
 void stackDestructor (struct Stack* thou)
 {
@@ -109,7 +110,7 @@ int pushIntoStack (struct Stack* thou, stackType newMember)
     DBG stackDump(thou, numOfErrorCode (stackError(thou)), __LINE__ );
 
     if (thou->sz == thou->capacity)
-        if(enlargeStack(thou))
+        if (enlargeStack(thou))
         {
             stackDump (thou,ARGNAME (NO_FREE_MEMORY), __LINE__);
             return NO_FREE_MEMORY;
@@ -122,50 +123,32 @@ int pushIntoStack (struct Stack* thou, stackType newMember)
 
     assert (!stackError (thou) asserted(numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+
     return NO_FUNCTION_ERRORS;
 }
 
 //-------------------------------------------------------
+
 int enlargeStack (struct Stack* thou)
 {
     assert (!stackError(thou) asserted(numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
 
-    size_t oldCapacity = thou->capacity;
-    if(!stackResize (thou, (size_t) (thou->capacity * ENLARGE_BIG_COEFFICIENT)))
-    {
-        fillStackWithPoison (thou, oldCapacity, thou->capacity - 1);
-        thou->stackHash = makeHash (thou);
-        stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
-        return  NO_FUNCTION_ERRORS;
-    }
+    if (resizeConfirm(!stackResize (thou, (size_t) (thou->capacity * ENLARGE_BIG_COEFFICIENT)), thou))
+        return NO_FUNCTION_ERRORS;
 
-    if(!stackResize (thou, (size_t) (thou->capacity * ENLARGE_SMALL_COEFFICIENT)))
-    {
-        fillStackWithPoison (thou, oldCapacity, thou->capacity - 1);
-        thou->stackHash = makeHash (thou);
-        stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
-        return  NO_FUNCTION_ERRORS;
-    }
+    if (resizeConfirm(!stackResize (thou, (size_t) (thou->capacity * ENLARGE_SMALL_COEFFICIENT)), thou))
+        return NO_FUNCTION_ERRORS;
 
-    if (!stackResize (thou, thou->capacity + 100))
-    {
-        fillStackWithPoison (thou, oldCapacity, thou->capacity - 1);
-        thou->stackHash = makeHash (thou);
-        stackDump (thou, numOfErrorCode(stackError (thou)), __LINE__ );
-        return  NO_FUNCTION_ERRORS;
-    }
+    if (resizeConfirm(!stackResize (thou, (size_t) (thou->capacity) + 100), thou))
+        return NO_FUNCTION_ERRORS;
 
-    if (!stackResize (thou, thou->capacity + 1))
-    {
-        fillStackWithPoison (thou, oldCapacity, thou->capacity - 1);
-        thou->stackHash = makeHash (thou);
-        stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
-        return  NO_FUNCTION_ERRORS;
-    }
+    if (resizeConfirm(!stackResize (thou, (size_t) (thou->capacity) + 1), thou))
+        return NO_FUNCTION_ERRORS;
 
     assert (!stackError (thou) asserted (numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+
     return NO_FREE_MEMORY;
 }
 
@@ -176,7 +159,7 @@ int reduceStack (struct Stack* thou)
     assert (!stackError(thou) asserted (numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
 
-    if(!stackResize(thou, thou->capacity * REDUCE_COEFFICIENT))
+    if (!stackResize(thou, thou->capacity * REDUCE_COEFFICIENT))
     {
         thou->stackHash = makeHash (thou);
         stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
@@ -185,6 +168,7 @@ int reduceStack (struct Stack* thou)
 
     assert (!stackError(thou) asserted(numOfErrorCode(stackError(thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+
     return NO_FREE_MEMORY;
 }
 
@@ -202,7 +186,6 @@ stackType popFromStack (struct  Stack* thou)
         return poison;
     }
 
-
     if (thou->sz > 0)
     {
         stackType returnMember;
@@ -211,18 +194,20 @@ stackType popFromStack (struct  Stack* thou)
         fillStackWithPoison(thou, thou->sz, thou->sz);
         thou->stackHash = makeHash (thou);
 
-        if( thou->sz <= thou->capacity * REDUCE_COEFFICIENT && thou->capacity * REDUCE_COEFFICIENT > thou->minimumCpct)
+        if ( thou->sz <= thou->capacity * REDUCE_COEFFICIENT && thou->capacity * REDUCE_COEFFICIENT > thou->minimumCpct)
             reduceStack(thou);
 
         thou->stackHash = makeHash (thou);
 
         assert (!stackError (thou) asserted(numOfErrorCode (stackError (thou))));
         DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+
         return returnMember;
     }
 
     assert (!stackError (thou) asserted(numOfErrorCode (stackError (thou))));
     DBG stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+
     return poison;
 }
 
@@ -275,15 +260,13 @@ int stackError (struct Stack* thou)
 int stackResize (struct  Stack* thou, size_t newCapacity)
 {
     void* temp = ((unsigned long long*)thou->data) - 1;
-    temp = (stackType*) realloc (temp , sizeof(stackType) * newCapacity + 2 * sizeof(unsigned long long));
+    temp = (void*) realloc (temp , sizeof(stackType) * newCapacity + 2 * sizeof(unsigned long long));
 
     if (!temp)
     {
         stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
         return NO_FREE_MEMORY;
     }
-
-
     else
     {
         *(unsigned long long*)temp = CANARY_VALUE;
@@ -299,7 +282,7 @@ int stackResize (struct  Stack* thou, size_t newCapacity)
 
 //-----------------------------------------------------------------------------
 
-void fillStackWithPoison ( struct Stack* thou, int beginInd, int endInd)
+void fillStackWithPoison ( struct Stack* thou, const int beginInd, const int endInd)
 {
     for (int ind = beginInd; ind <= endInd; ++ind)
         *((stackType*) thou->data + ind) = poison;
@@ -307,7 +290,7 @@ void fillStackWithPoison ( struct Stack* thou, int beginInd, int endInd)
 
 //--------------------------------------------------------------------------
 
-int stackDump (struct Stack* thou, char* problem, int line)
+int stackDump (struct Stack* thou, char* problem, const int line)
 {
     if (!thou)
     {
@@ -380,21 +363,21 @@ long long ROR (long long value)
 
 //-------------------------------------------------
 
-char* numOfErrorCode (int errorCode)
+char* numOfErrorCode (const int errorCode)
 {
     switch (errorCode)
     {
-        case NO_STACK_ERRORS: return ARGNAME(NO_STACK_ERRORS);
-        case BAD_SIZE: return ARGNAME(BAD_SIZE);
-        case UNACCEPTABLE_Member: return ARGNAME(UNACCEPTABLE_Member);
-        case BAD_MINIMUM_SIZE: return  ARGNAME(BAD_MINIMUM_SIZE);
-        case CANARY_VALUE_CHANGED: return  ARGNAME(CANARY_VALUE_CHANGED);
-        case BAD_HASH: return ARGNAME(BAD_HASH);
+        case NO_STACK_ERRORS:      return ARGNAME(NO_STACK_ERRORS);
+        case BAD_SIZE:             return ARGNAME(BAD_SIZE);
+        case UNACCEPTABLE_Member:  return ARGNAME(UNACCEPTABLE_Member);
+        case BAD_MINIMUM_SIZE:     return ARGNAME(BAD_MINIMUM_SIZE);
+        case CANARY_VALUE_CHANGED: return ARGNAME(CANARY_VALUE_CHANGED);
+        case BAD_HASH:             return ARGNAME(BAD_HASH);
 
         default:
             char* str;
             sprintf(str, "Error function returned code %d. Stack can`t have this status\n", errorCode);
-            return  str;
+            return str;
     }
 }
 
@@ -402,7 +385,7 @@ char* numOfErrorCode (int errorCode)
 
 struct Stack* newStack()
 {
-    struct Stack* temp = (struct  Stack*) calloc(1, sizeof(*temp));
+    struct Stack* temp = (struct Stack*) calloc(1, sizeof(*temp));
     if (!temp)
         return NULL;
 
@@ -447,5 +430,19 @@ void fLogsClose()
 }
 
 //-----------------------------------------------------------------------
+
+int resizeConfirm (int condition, struct Stack* thou)
+{
+    size_t oldCapacity = thou->capacity;
+    if (condition)
+    {
+        fillStackWithPoison (thou, oldCapacity, thou->capacity - 1);
+        thou->stackHash = makeHash (thou);
+        stackDump (thou, numOfErrorCode (stackError (thou)), __LINE__ );
+        return  NO_FUNCTION_ERRORS;
+    }
+
+    return  NO_FREE_MEMORY;
+}
 
 
