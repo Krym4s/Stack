@@ -3,4 +3,4 @@ project(Stack)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Stack main.cpp cmake-build-debug/IsE_Stack.h)
+add_executable(Stack main.cpp IsE_Stack.h IsE_Stack.cpp)

@@ -15,9 +15,7 @@
 typedef double stackType;
 const stackType poison = NAN;
 
-//declaration of stack, it`s recommended to
-
-struct  Stack;
+struct Stack;
 
 //!----------------------------------------------------------
 //!         This function constructs structure Stack
@@ -30,7 +28,7 @@ struct  Stack;
 //! \note every stack have it`s own minimum size that always is not more than capacity
 //!--------------------------------------------------------
 
-int stackConstructor(struct Stack* thou, size_t capacity);
+int stackConstructor (struct Stack* thou, size_t capacity);
 
 //!---------------------------------------------------------
 //!         Destructs current Stack
@@ -39,7 +37,7 @@ int stackConstructor(struct Stack* thou, size_t capacity);
 //! \note frees memory and makes pointers to adress to NULL
 //!-------------------------------------------
 
-void stackDestructor(struct Stack* thou);
+void stackDestructor (struct Stack* thou);
 
 //!-------------------------------------------------
 //!         Pushes new member to stack
@@ -49,7 +47,7 @@ void stackDestructor(struct Stack* thou);
 //! \return code of function or stack error
 //!-------------------------------------------------
 
-int pushIntoStack(struct Stack* thou, stackType newMember);
+int pushIntoStack (struct Stack* thou, stackType newMember);
 
 //!---------------------------------------------------
 //!         Tries to enlarge stack capacity and fill new stack volume with poison
@@ -60,7 +58,7 @@ int pushIntoStack(struct Stack* thou, stackType newMember);
 //! \note function tries to enlarge stack 4 times and after that return error code
 //!---------------------------------------------------
 
-int enlargeStack(struct Stack* thou);
+int enlargeStack (struct Stack* thou);
 
 //!---------------------------------------------------
 //!         Tries to reduce stack capacity
@@ -69,7 +67,7 @@ int enlargeStack(struct Stack* thou);
 //! \return code of function or stack error
 //!---------------------------------------------------
 
-int reduceStack(struct Stack* thou);
+int reduceStack (struct Stack* thou);
 
 //!----------------------------------------------------
 //!         Put top member out of stack
@@ -80,7 +78,7 @@ int reduceStack(struct Stack* thou);
 //! \note returns poison if stack buffer is empty
 //!-----------------------------------------------------
 
-stackType pop(struct Stack* thou);
+stackType popFromStack (struct Stack* thou);
 
 //!---------------------------------------------------
 //!        shows top member of stack
@@ -91,7 +89,7 @@ stackType pop(struct Stack* thou);
 //! \note returns poison if stack buffer is empty
 //!-----------------------------------------------------
 
-stackType top(struct Stack* thou);
+stackType topOfStack (struct Stack* thou);
 
 //!----------------------------------------------------
 //!         checks if stack is correct or incorrect
@@ -100,7 +98,7 @@ stackType top(struct Stack* thou);
 //! \return code of function or stack error
 //!---------------------------------------------------
 
-int stackError(struct Stack* thou);
+int stackError (struct Stack* thou);
 
 //!---------------------------------------------------
 //!         Make logs
@@ -110,7 +108,7 @@ int stackError(struct Stack* thou);
 //! \return  code of error of function
 //!---------------------------------------------------
 
-int stackDump(struct Stack* thou, char* reason, int line);
+int stackDump (struct Stack* thou, char* reason, int line);
 
 //!---------------------------------------------------
 //!         resizes data and change capacity of stack
@@ -119,7 +117,7 @@ int stackDump(struct Stack* thou, char* reason, int line);
 //! \return code of function or stack error
 //!--------------------------------------------------
 
-int stackResize(struct Stack* thou, size_t newCapacity);
+int stackResize (struct Stack* thou, size_t newCapacity);
 
 //!---------------------------------------------
 //!         fill data members of stack from beginInd to endInd with poison
@@ -128,7 +126,7 @@ int stackResize(struct Stack* thou, size_t newCapacity);
 //! \param [in] endInd - index of last member
 //!---------------------------------------------
 
-void fillStackWithPoison(struct Stack* thou, size_t beginInd, size_t endInd);
+void fillStackWithPoison (struct Stack* thou, int beginInd, int endInd);
 
 //!----------------------------------------------
 //!         makes hash to identify stack
@@ -136,7 +134,7 @@ void fillStackWithPoison(struct Stack* thou, size_t beginInd, size_t endInd);
 //! \return hash
 //!----------------------------------------------
 
-long long makeHash(struct Stack* thou);
+long long makeHash (struct Stack* thou);
 
 //!-------------------------------------
 //!         makes left cycle of bits
@@ -144,7 +142,7 @@ long long makeHash(struct Stack* thou);
 //! \return left cycle of bits
 //!------------------------------------
 
-long long ROL(long long value);
+long long ROL (long long value);
 
 //!-------------------------------------
 //!         makes right cycle of bits
@@ -152,7 +150,7 @@ long long ROL(long long value);
 //! \return right cycle of bits
 //!------------------------------------
 
-long long ROR(long long value);
+long long ROR (long long value);
 
 //!-----------------------------------
 //!         translates code of error to name of error
@@ -160,13 +158,15 @@ long long ROR(long long value);
 //! \return name of error
 //!-----------------------------------
 
-char* numOfErrorCode(int errorCode);
+char* numOfErrorCode (int errorCode);
 
 //!----------------------------------
-//!
+//!         Returns pointer to Stack with properate memory
 //! \return pointer to Stack with properate memory
 //!------------------------------------
 
 struct Stack* newStack();
+
+void fLogsClose();
 
 #endif //STACK_ISE_STACK_H
