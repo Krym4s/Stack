@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/egolg/CLionProjects/Stack/IsE_Stack.h
+stdio.h
+-
+stdlib.h
+-
+math.h
+-
+assert.h
+-
+
+C:/Users/egolg/CLionProjects/Stack/main.cpp
+IsE_Stack.h
+C:/Users/egolg/CLionProjects/Stack/IsE_Stack.h
+
